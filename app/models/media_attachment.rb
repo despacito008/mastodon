@@ -24,14 +24,16 @@
 class MediaAttachment < ApplicationRecord
   self.inheritance_column = nil
 
-  enum type: [:image, :gifv, :video, :unknown]
+  enum type: [:image, :gifv, :video, :audio, :unknown]
 
   IMAGE_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].freeze
   VIDEO_FILE_EXTENSIONS = ['.webm', '.mp4', '.m4v', '.mov'].freeze
+  AUDIO_FILE_EXTENSIONS = ['.mp3', '.m4a', '.wav', '.ogg'].freeze
 
   IMAGE_MIME_TYPES             = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].freeze
   VIDEO_MIME_TYPES             = ['video/webm', 'video/mp4', 'video/quicktime'].freeze
   VIDEO_CONVERTIBLE_MIME_TYPES = ['video/webm', 'video/quicktime'].freeze
+  AUDIO_MIME_TYPES             = ['audio/mpeg', 'audio/mp4', 'audio/vnd.wav', 'audio/wav', 'audio/x-wav', 'audio/x-wave', 'audio/ogg',].freeze
 
   BLURHASH_OPTIONS = {
     x_comp: 4,
@@ -48,6 +50,22 @@ class MediaAttachment < ApplicationRecord
       pixels: 160_000, # 400x400px
       file_geometry_parser: FastGeometryParser,
       blurhash: BLURHASH_OPTIONS,
+    },
+  }.freeze
+
+  AUDIO_STYLES = {
+    original: {
+      format: 'mp4',
+      convert_options: {
+        output: {
+          filter_complex: '"[0:a]compand,showwaves=s=640x360:mode=line,format=yuv420p[v]"',
+          map: '"[v]" -map 0:a', 
+          threads: 2,
+          vcodec: 'libx264',
+          acodec: 'aac',
+          movflags: '+faststart',
+        },
+      },
     },
   }.freeze
 
@@ -163,6 +181,8 @@ class MediaAttachment < ApplicationRecord
         }
       elsif IMAGE_MIME_TYPES.include? f.instance.file_content_type
         IMAGE_STYLES
+      elsif AUDIO_MIME_TYPES.include? f.instance.file_content_type
+        AUDIO_STYLES
       elsif VIDEO_CONVERTIBLE_MIME_TYPES.include?(f.instance.file_content_type)
         {
           small: VIDEO_STYLES[:small],
@@ -178,6 +198,8 @@ class MediaAttachment < ApplicationRecord
         [:gif_transcoder, :blurhash_transcoder]
       elsif VIDEO_MIME_TYPES.include? f.file_content_type
         [:video_transcoder, :blurhash_transcoder]
+      elsif AUDIO_MIME_TYPES.include? f.file_content_type
+        [:audio_transcoder, :blurhash_transcoder]
       else
         [:lazy_thumbnail, :blurhash_transcoder]
       end
@@ -202,7 +224,7 @@ class MediaAttachment < ApplicationRecord
   end
 
   def set_type_and_extension
-    self.type = VIDEO_MIME_TYPES.include?(file_content_type) ? :video : :image
+    self.type = VIDEO_MIME_TYPES.include?(file_content_type) ? :video : AUDIO_MIME_TYPES.include?(file_content_type) ? :audio : :image
   end
 
   def set_meta
