@@ -326,6 +326,7 @@ Rails.application.routes.draw do
       resources :mutes,        only: [:index]
       resources :favourites,   only: [:index]
       resources :reports,      only: [:create]
+      resources :trends,       only: [:index]
       resources :filters,      only: [:index, :create, :show, :update, :destroy]
       resources :endorsements, only: [:index]
 

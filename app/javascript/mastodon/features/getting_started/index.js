@@ -13,6 +13,7 @@ import { List as ImmutableList } from 'immutable';
 import NavigationBar from '../compose/components/navigation_bar';
 import Icon from 'mastodon/components/icon';
 import LinkFooter from 'mastodon/features/ui/components/link_footer';
+import TrendsContainer from './containers/trends_container';
 
 const messages = defineMessages({
   home_timeline: { id: 'tabs_bar.home', defaultMessage: 'Home' },
