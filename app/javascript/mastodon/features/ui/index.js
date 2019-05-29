@@ -63,6 +63,7 @@ const mapStateToProps = state => ({
   hasComposingText: state.getIn(['compose', 'text']).trim().length !== 0,
   hasMediaAttachments: state.getIn(['compose', 'media_attachments']).size > 0,
   dropdownMenuIsOpen: state.getIn(['dropdown_menu', 'openId']) !== null,
+  noBots: state.getIn(['settings', 'home', 'other', 'noBots']),
 });
 
 const keyMap = {
@@ -207,6 +208,7 @@ class UI extends React.PureComponent {
     location: PropTypes.object,
     intl: PropTypes.object.isRequired,
     dropdownMenuIsOpen: PropTypes.bool,
+    noBots: PropTypes.bool,
   };
 
   state = {
@@ -301,6 +303,8 @@ class UI extends React.PureComponent {
   }
 
   componentWillMount () {
+    const { noBots } = this.props;
+
     window.addEventListener('beforeunload', this.handleBeforeUnload, false);
 
     document.addEventListener('dragenter', this.handleDragEnter, false);
@@ -317,7 +321,7 @@ class UI extends React.PureComponent {
       window.setTimeout(() => Notification.requestPermission(), 120 * 1000);
     }
 
-    this.props.dispatch(expandHomeTimeline());
+    this.props.dispatch(expandHomeTimeline({ noBots }));
     this.props.dispatch(expandNotifications());
 
     setTimeout(() => this.props.dispatch(fetchFilters()), 500);
@@ -327,6 +331,13 @@ class UI extends React.PureComponent {
     this.hotkeys.__mousetrap__.stopCallback = (e, element) => {
       return ['TEXTAREA', 'SELECT', 'INPUT'].includes(element.tagName);
     };
+  }
+
+  componentWillReceiveProps (nextProps) {
+    const { noBots } = nextProps;
+    if (noBots !== this.props.noBots) {
+      this.props.dispatch(expandHomeTimeline({ noBots }));
+    }
   }
 
   componentWillUnmount () {
