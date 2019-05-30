@@ -25,7 +25,7 @@ const initialState = ImmutableMap({
     }),
 
     other: ImmutableMap({
-      noBots: false,
+      excludeBots: false,
     }),
   }),
 
