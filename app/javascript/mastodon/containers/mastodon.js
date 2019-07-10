@@ -26,6 +26,7 @@ store.dispatch(fetchCustomEmojis());
 
 const mapStateToProps = state => ({
   showIntroduction: state.getIn(['settings', 'introductionVersion'], 0) < INTRODUCTION_VERSION,
+  excludeBots: state.getIn(['settings', 'home', 'other', 'excludeBots']),
 });
 
 @connect(mapStateToProps)
@@ -33,7 +34,28 @@ class MastodonMount extends React.PureComponent {
 
   static propTypes = {
     showIntroduction: PropTypes.bool,
+    excludeBots: PropTypes.bool,
   };
+
+  componentDidMount() {
+    const { excludeBots } = this.props;
+    this.disconnect = store.dispatch(connectUserStream({ excludeBots }));
+  }
+
+  componentWillReceiveProps (nextProps) {
+    const { excludeBots } = nextProps;
+    if (excludeBots !== this.props.excludeBots) {
+      this.disconnect();
+      this.disconnect = store.dispatch(connectUserStream({ excludeBots }));
+    }
+  }
+
+  componentWillUnmount () {
+    if (this.disconnect) {
+      this.disconnect();
+      this.disconnect = null;
+    }
+  }
 
   render () {
     const { showIntroduction } = this.props;
@@ -58,17 +80,6 @@ export default class Mastodon extends React.PureComponent {
   static propTypes = {
     locale: PropTypes.string.isRequired,
   };
-
-  componentDidMount() {
-    this.disconnect = store.dispatch(connectUserStream());
-  }
-
-  componentWillUnmount () {
-    if (this.disconnect) {
-      this.disconnect();
-      this.disconnect = null;
-    }
-  }
 
   render () {
     const { locale } = this.props;

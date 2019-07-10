@@ -22,6 +22,7 @@ const mapStateToProps = (state, { onlyMedia, columnId }) => {
   return {
     hasUnread: state.getIn(['timelines', `public${onlyMedia ? ':media' : ''}`, 'unread']) > 0,
     onlyMedia: (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'onlyMedia']) : state.getIn(['settings', 'public', 'other', 'onlyMedia']),
+    excludeBots: (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'excludeBots']) : state.getIn(['settings', 'public', 'other', 'excludeBots']),
   };
 };
 
@@ -35,6 +36,7 @@ class PublicTimeline extends React.PureComponent {
 
   static defaultProps = {
     onlyMedia: false,
+    excludeBots: false,
   };
 
   static propTypes = {
@@ -45,15 +47,16 @@ class PublicTimeline extends React.PureComponent {
     multiColumn: PropTypes.bool,
     hasUnread: PropTypes.bool,
     onlyMedia: PropTypes.bool,
+    excludeBots: PropTypes.bool,
   };
 
   handlePin = () => {
-    const { columnId, dispatch, onlyMedia } = this.props;
+    const { columnId, dispatch, onlyMedia, excludeBots } = this.props;
 
     if (columnId) {
       dispatch(removeColumn(columnId));
     } else {
-      dispatch(addColumn('PUBLIC', { other: { onlyMedia } }));
+      dispatch(addColumn('PUBLIC', { other: { onlyMedia, excludeBots } }));
     }
   }
 
@@ -67,19 +70,19 @@ class PublicTimeline extends React.PureComponent {
   }
 
   componentDidMount () {
-    const { dispatch, onlyMedia } = this.props;
+    const { dispatch, onlyMedia, excludeBots } = this.props;
 
-    dispatch(expandPublicTimeline({ onlyMedia }));
-    this.disconnect = dispatch(connectPublicStream({ onlyMedia }));
+    dispatch(expandPublicTimeline({ onlyMedia, excludeBots }));
+    this.disconnect = dispatch(connectPublicStream({ onlyMedia, excludeBots }));
   }
 
   componentDidUpdate (prevProps) {
-    if (prevProps.onlyMedia !== this.props.onlyMedia) {
-      const { dispatch, onlyMedia } = this.props;
+    if (prevProps.onlyMedia !== this.props.onlyMedia || prevProps.excludeBots !== this.props.excludeBots) {
+      const { dispatch, onlyMedia, excludeBots } = this.props;
 
       this.disconnect();
-      dispatch(expandPublicTimeline({ onlyMedia }));
-      this.disconnect = dispatch(connectPublicStream({ onlyMedia }));
+      dispatch(expandPublicTimeline({ onlyMedia, excludeBots }));
+      this.disconnect = dispatch(connectPublicStream({ onlyMedia, excludeBots }));
     }
   }
 
@@ -95,9 +98,9 @@ class PublicTimeline extends React.PureComponent {
   }
 
   handleLoadMore = maxId => {
-    const { dispatch, onlyMedia } = this.props;
+    const { dispatch, onlyMedia, excludeBots } = this.props;
 
-    dispatch(expandPublicTimeline({ maxId, onlyMedia }));
+    dispatch(expandPublicTimeline({ maxId, onlyMedia, excludeBots }));
   }
 
   render () {

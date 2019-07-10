@@ -22,6 +22,7 @@ const mapStateToProps = (state, { onlyMedia, columnId }) => {
   return {
     hasUnread: state.getIn(['timelines', `community${onlyMedia ? ':media' : ''}`, 'unread']) > 0,
     onlyMedia: (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'onlyMedia']) : state.getIn(['settings', 'community', 'other', 'onlyMedia']),
+    excludeBots: (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'excludeBots']) : state.getIn(['settings', 'community', 'other', 'excludeBots']),
   };
 };
 
@@ -35,6 +36,7 @@ class CommunityTimeline extends React.PureComponent {
 
   static defaultProps = {
     onlyMedia: false,
+    excludeBots: false,
   };
 
   static propTypes = {
@@ -45,15 +47,16 @@ class CommunityTimeline extends React.PureComponent {
     hasUnread: PropTypes.bool,
     multiColumn: PropTypes.bool,
     onlyMedia: PropTypes.bool,
+    excludeBots: PropTypes.bool,
   };
 
   handlePin = () => {
-    const { columnId, dispatch, onlyMedia } = this.props;
+    const { columnId, dispatch, onlyMedia, excludeBots } = this.props;
 
     if (columnId) {
       dispatch(removeColumn(columnId));
     } else {
-      dispatch(addColumn('COMMUNITY', { other: { onlyMedia } }));
+      dispatch(addColumn('COMMUNITY', { other: { onlyMedia, excludeBots } }));
     }
   }
 
@@ -67,19 +70,19 @@ class CommunityTimeline extends React.PureComponent {
   }
 
   componentDidMount () {
-    const { dispatch, onlyMedia } = this.props;
+    const { dispatch, onlyMedia, excludeBots } = this.props;
 
-    dispatch(expandCommunityTimeline({ onlyMedia }));
-    this.disconnect = dispatch(connectCommunityStream({ onlyMedia }));
+    dispatch(expandCommunityTimeline({ onlyMedia, excludeBots }));
+    this.disconnect = dispatch(connectCommunityStream({ onlyMedia, excludeBots }));
   }
 
   componentDidUpdate (prevProps) {
-    if (prevProps.onlyMedia !== this.props.onlyMedia) {
-      const { dispatch, onlyMedia } = this.props;
+    if (prevProps.onlyMedia !== this.props.onlyMedia || prevProps.excludeBots !== this.props.excludeBots) {
+      const { dispatch, onlyMedia, excludeBots } = this.props;
 
       this.disconnect();
-      dispatch(expandCommunityTimeline({ onlyMedia }));
-      this.disconnect = dispatch(connectCommunityStream({ onlyMedia }));
+      dispatch(expandCommunityTimeline({ onlyMedia, excludeBots }));
+      this.disconnect = dispatch(connectCommunityStream({ onlyMedia, excludeBots }));
     }
   }
 
@@ -95,9 +98,9 @@ class CommunityTimeline extends React.PureComponent {
   }
 
   handleLoadMore = maxId => {
-    const { dispatch, onlyMedia } = this.props;
+    const { dispatch, onlyMedia, excludeBots } = this.props;
 
-    dispatch(expandCommunityTimeline({ maxId, onlyMedia }));
+    dispatch(expandCommunityTimeline({ maxId, onlyMedia, excludeBots }));
   }
 
   render () {
