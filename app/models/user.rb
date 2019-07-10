@@ -107,6 +107,7 @@ class User < ApplicationRecord
            :reduce_motion, :system_font_ui, :noindex, :theme, :display_media, :hide_network,
            :expand_spoilers, :default_language, :aggregate_reblogs, :show_application,
            :advanced_layout, to: :settings, prefix: :setting, allow_nil: false
+           :strip_formatting, to: :settings, prefix: :setting, allow_nil: false
 
   attr_reader :invite_code
   attr_writer :external
